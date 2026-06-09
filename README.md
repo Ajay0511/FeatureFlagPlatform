@@ -190,14 +190,12 @@ This guarantees that the same user consistently gets the same experience.
 
 ## Tech Stack
 
-* Java 21
+* Java 17
 * Spring Boot
 * MySQL
 * Redis
 * Kafka
-* Docker
 * Maven
-* Swagger/OpenAPI
 
 ---
 
