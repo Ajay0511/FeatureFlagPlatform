@@ -296,3 +296,19 @@ This setup helps validate real-world rollout scenarios such as:
 * Instant feature rollback
 
 ---
+
+
+## Query
+```sql
+CREATE TABLE feature_flags (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    flag_key VARCHAR(100) NOT NULL UNIQUE,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    enabled BOOLEAN NOT NULL DEFAULT FALSE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
+);
+```
+
