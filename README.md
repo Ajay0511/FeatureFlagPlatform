@@ -307,8 +307,87 @@ CREATE TABLE feature_flags (
     description TEXT,
     enabled BOOLEAN NOT NULL DEFAULT FALSE,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP NOT NULL
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      ON UPDATE CURRENT_TIMESTAMP
 );
+```
+
+## API Examples
+
+### Create a Feature Flag
+
+```bash
+curl --location 'http://localhost:8080/api/v1/flags/createflag' \
+--header 'Content-Type: application/json' \
+--data '{
+    "flagKey": "NEW_DASHBOARD",
+    "name": "New Dashboard Feature",
+    "description": "Enable the new dashboard experience",
+    "enabled": false
+}'
+```
+
+#### Response (201 Created)
+
+```json
+{
+    "id": 1,
+    "flagKey": "NEW_DASHBOARD",
+    "name": "New Dashboard Feature",
+    "description": "Enable the new dashboard experience",
+    "enabled": false,
+    "active": true,
+    "createdAt": "2026-06-13T19:00:00",
+    "updatedAt": "2026-06-13T19:00:00"
+}
+```
+
+---
+
+### Create a Duplicate Feature Flag
+
+```bash
+curl --location 'http://localhost:8080/api/v1/flags/createflag' \
+--header 'Content-Type: application/json' \
+--data '{
+    "flagKey": "NEW_DASHBOARD",
+    "name": "New Duplicate Feature",
+    "description": "Test Duplicate",
+    "enabled": false
+}'
+```
+
+#### Response (409 Conflict)
+
+```json
+{
+    "timestamp": "2026-06-13T19:05:00",
+    "status": 409,
+    "message": "Feature flag already exists with key: NEW_DASHBOARD"
+}
+```
+
+---
+
+### Validation Failure
+
+```bash
+curl --location 'http://localhost:8080/api/v1/flags/createflag' \
+--header 'Content-Type: application/json' \
+--data '{
+    "flagKey": "",
+    "name": ""
+}'
+```
+
+#### Response (400 Bad Request)
+
+```json
+{
+    "timestamp": "2026-06-13T19:06:00",
+    "status": 400,
+    "message": "Flag key must not be blank"
+}
 ```
 

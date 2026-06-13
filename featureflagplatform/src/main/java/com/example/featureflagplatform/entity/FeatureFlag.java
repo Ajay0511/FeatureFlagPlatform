@@ -30,7 +30,7 @@ public class FeatureFlag {
     private Long id;
 
     @Column(name="flag_key", nullable = false, unique = true)
-    private String feature_flag;
+    private String flagKey;
 
     @Column(nullable = false)
     private String name;
@@ -40,8 +40,8 @@ public class FeatureFlag {
     @Column(nullable = false)
     private boolean enabled;
 
-    @Column(nullable = false)
-    private boolean isActive;
+    @Column(name = "is_active", nullable = false)
+    private boolean active;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
