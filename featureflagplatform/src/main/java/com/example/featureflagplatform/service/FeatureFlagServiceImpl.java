@@ -1,15 +1,21 @@
 package com.example.featureflagplatform.service;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
 import com.example.featureflagplatform.dto.request.CreateFeatureFlagRequest;
+import com.example.featureflagplatform.dto.request.UpdateFeatureFlagStatusRequest;
 import com.example.featureflagplatform.dto.response.FeatureFlagResponse;
+import com.example.featureflagplatform.dto.response.FeatureFlagStatusResponse;
 import com.example.featureflagplatform.entity.FeatureFlag;
 import com.example.featureflagplatform.exception.FlagAlreadyExistsException;
+import com.example.featureflagplatform.exception.FlagNotFoundCustomException;
 import com.example.featureflagplatform.repository.FeatureFlagRepository;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
+
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +41,40 @@ public class FeatureFlagServiceImpl implements FeatureFlagService {
         FeatureFlag savedFlag = featureFlagRepository.save(featureFlag);
 
         return mapToResponse(savedFlag);
+    }
+
+    @Override
+    public List<FeatureFlagResponse> getAllFlags(){
+        return featureFlagRepository.findByActiveTrue()
+                .stream().map(this::mapToResponse).toList();
+    }
+
+    @Override
+    @Transactional(readOnly=true)
+    public FeatureFlagStatusResponse getFlagStatus(String flagKey){
+        FeatureFlag featureFlag = featureFlagRepository.findByFlagKeyAndActiveTrue(flagKey)
+                                .orElseThrow(() -> new FlagNotFoundCustomException("flag key " + flagKey + " not found"));
+
+        return FeatureFlagStatusResponse.builder()
+                .flagkey(flagKey)
+                .enabled(featureFlag.isEnabled())
+                .build();
+    }
+
+    @Override
+    public FeatureFlagStatusResponse updateFlagStatus(String flagKey, UpdateFeatureFlagStatusRequest request){
+        FeatureFlag featureFlag = featureFlagRepository
+                                .findByFlagKeyAndActiveTrue(flagKey)
+                                .orElseThrow(() -> new FlagNotFoundCustomException("flag key " + flagKey + " not found"));
+        System.out.println(featureFlag);
+        featureFlag.setEnabled(request.getEnabled());
+        featureFlagRepository.save(featureFlag);
+
+        return FeatureFlagStatusResponse.builder()
+                .flagkey(flagKey)
+                .enabled(featureFlag.isEnabled())
+                .build();
+
     }
 
     public FeatureFlagResponse mapToResponse(FeatureFlag featureFlag){

@@ -391,3 +391,86 @@ curl --location 'http://localhost:8080/api/v1/flags/createflag' \
 }
 ```
 
+### Create a Feature Flag
+
+```bash
+curl --location 'http://localhost:8080/api/v1/flags/all'
+```
+
+#### Response
+
+```json
+[
+    {
+        "id": 1,
+        "flagkey": "NEW_DASHBOARD",
+        "name": "New Dashboard Feature",
+        "description": "Enable the new dashboard experience",
+        "enabled": false,
+        "active": true,
+        "createdAt": "2026-06-13T18:44:37",
+        "updatedAt": "2026-06-13T18:44:37"
+    },
+    {
+        "id": 2,
+        "flagkey": "NEW_PAYMENT_FLAG",
+        "name": "New Payment Feature",
+        "description": "New Payment Feature",
+        "enabled": false,
+        "active": true,
+        "createdAt": "2026-06-13T18:50:11",
+        "updatedAt": "2026-06-13T18:50:11"
+    }
+]
+```
+
+### Check a Feature Flag status
+
+```bash
+curl --location 'http://localhost:8080/api/v1/flags/NEW_DASHBOARD/status'
+```
+
+#### Response for existing flag
+
+```json
+{
+    "flagkey": "NEW_DASHBOARD",
+    "enabled": false
+}
+```
+
+### Response for non-existing flag
+```json
+{
+    "timestamp": "2026-06-16T21:02:09.649618",
+    "status": 404,
+    "message": "flag key OLD_DASHBOARD not found"
+}
+```
+
+
+### Toggle a Feature Flag status
+
+```bash
+curl --location --request PATCH 'http://localhost:8080/api/v1/flags/NEW_DASHBOARD/update' \
+--header 'Content-Type: application/json' \
+--data '{"enabled":true}'
+```
+
+#### Response for existing flag
+
+```json
+{
+    "flagkey": "NEW_DASHBOARD",
+    "enabled": true
+}
+```
+
+### Response for non-existing flag
+```json
+{
+    "timestamp": "2026-06-16T21:27:43.489448",
+    "status": 404,
+    "message": "flag key OLD_DASHBOARD not found"
+}
+```
