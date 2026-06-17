@@ -49,4 +49,7 @@ public class FeatureFlag {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+    @Column(name="rollout_percentage", nullable = false)
+    private Integer rolloutPercentage;
+
 }

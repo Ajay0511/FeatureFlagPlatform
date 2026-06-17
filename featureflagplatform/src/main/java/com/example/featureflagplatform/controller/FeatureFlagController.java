@@ -15,12 +15,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.featureflagplatform.dto.request.CreateFeatureFlagRequest;
 import com.example.featureflagplatform.dto.request.UpdateFeatureFlagStatusRequest;
+import com.example.featureflagplatform.dto.request.UpdateRolloutRequest;
+import com.example.featureflagplatform.dto.response.FeatureFlagEvaluationResponse;
 import com.example.featureflagplatform.dto.response.FeatureFlagResponse;
 import com.example.featureflagplatform.dto.response.FeatureFlagStatusResponse;
-import com.example.featureflagplatform.entity.FeatureFlag;
 import com.example.featureflagplatform.service.FeatureFlagService;
 
-import io.micrometer.core.ipc.http.HttpSender.Response;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -55,5 +55,21 @@ public class FeatureFlagController {
             @RequestBody UpdateFeatureFlagStatusRequest request
     ){
         return ResponseEntity.ok(featureFlagService.updateFlagStatus(flagKey, request));
+    }
+
+    @GetMapping("/{flagKey}/evaluate")
+    public ResponseEntity<FeatureFlagEvaluationResponse> evaluateflag(
+        @PathVariable String flagKey,
+        @RequestParam String userId){
+            return ResponseEntity.ok(featureFlagService.evaluateFlag(flagKey, userId));
+    }
+
+    @PatchMapping("/{flagKey}/rollout")
+    public ResponseEntity<FeatureFlagStatusResponse> updateRollout(
+            @PathVariable String flagKey,
+            @Valid @RequestBody UpdateRolloutRequest request) {
+
+        return ResponseEntity.ok(
+                featureFlagService.updateRolloutPercentage(flagKey, request));
     }
 }

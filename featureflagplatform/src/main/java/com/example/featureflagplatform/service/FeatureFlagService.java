@@ -4,6 +4,8 @@ import java.util.List;
 
 import com.example.featureflagplatform.dto.request.CreateFeatureFlagRequest;
 import com.example.featureflagplatform.dto.request.UpdateFeatureFlagStatusRequest;
+import com.example.featureflagplatform.dto.request.UpdateRolloutRequest;
+import com.example.featureflagplatform.dto.response.FeatureFlagEvaluationResponse;
 import com.example.featureflagplatform.dto.response.FeatureFlagResponse;
 import com.example.featureflagplatform.dto.response.FeatureFlagStatusResponse;
 
@@ -15,4 +17,8 @@ public interface FeatureFlagService {
     FeatureFlagStatusResponse getFlagStatus(String flagKey);
 
     FeatureFlagStatusResponse updateFlagStatus(String flagKey, UpdateFeatureFlagStatusRequest request);
+
+    FeatureFlagEvaluationResponse evaluateFlag(String flagKey, String userId);
+
+    FeatureFlagStatusResponse updateRolloutPercentage(String flagKey, UpdateRolloutRequest request);
 }
