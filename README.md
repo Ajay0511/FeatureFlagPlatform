@@ -474,3 +474,130 @@ curl --location --request PATCH 'http://localhost:8080/api/v1/flags/NEW_DASHBOAR
     "message": "flag key OLD_DASHBOARD not found"
 }
 ```
+
+
+### Evaluate a feature flag
+```bash
+curl --location 'http://localhost:8080/api/v1/flags/NEW_DASHBOARD/evaluate'
+```
+
+### Response for success
+```json
+{
+    "flagKey": "NEW_DASHBOARD",
+    "enabled": true,
+    "reason": "ENABLED"
+}
+```
+### Failure Response
+```json
+{
+    "timestamp": "2026-06-17T21:44:28.010601",
+    "status": 404,
+    "message": "flag key W_DASHBOARD not found"
+}
+```
+
+
+### Enabling ROllout Percentage
+```sql
+ALTER TABLE feature_flags
+ADD COLUMN rollout_percentage INT NOT NULL DEFAULT 100;
+```
+
+
+### Update Evaluate API
+```bash
+curl --location 'http://localhost:8080/api/v1/flags/NEW_DASHBOARD/evaluate?userId=Ajay'
+```
+
+### Response
+```json
+{
+    "flagKey": "NEW_DASHBOARD",
+    "enabled": true,
+    "reason": "ROLLOUT_MATCHED",
+    "rolloutPercentage": null
+}
+```
+
+### Rollout Update API
+
+```bash
+curl --location --request PATCH 'http://localhost:8080/api/v1/flags/NEW_DASHBOARD/rollout' \
+--header 'Content-Type: application/json' \
+--data '{
+    "rolloutPercentage": 30
+}'
+```
+
+### Success Response with 30 percent rollout
+```json
+{
+    "flagkey": "NEW_DASHBOARD",
+    "enabled": true,
+    "rolloutPercentage": 30
+}
+```
+
+### Error Response with 250 percent rollout
+```json
+{
+    "timestamp": "2026-06-17T22:44:29.488392",
+    "status": 400,
+    "message": "Rollout percentage cannot be greater than 100"
+}
+```
+
+
+### Introduction of User Target Rules
+```sql
+CREATE TABLE feature_flag_rules (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    feature_flag_id BIGINT NOT NULL,
+    rule_type VARCHAR(50) NOT NULL,
+    rule_value VARCHAR(255) NOT NULL,
+
+    FOREIGN KEY (feature_flag_id)
+        REFERENCES feature_flags(id)
+);
+```
+
+### adding rule to flag key
+```bash
+curl --location 'http://localhost:8080/api/v1/flags/NEW_DASHBOARD/addRule' \
+--header 'Content-Type: application/json' \
+--data '{
+    "ruleType": "USER_ID",
+    "ruleValue": "user123"
+}'
+```
+
+### Response
+```json
+{
+    "id": 1,
+    "ruleType": "USER_ID",
+    "ruleValue": "user123"
+}
+```
+
+### Get All Rules
+```bash
+curl --location 'http://localhost:8080/api/v1/flags/NEW_DASHBOARD/getRules'
+```
+
+```json
+[
+    {
+        "id": 1,
+        "ruleType": "USER_ID",
+        "ruleValue": "user123"
+    }
+]
+```
+
+### Delete Rule
+```bash
+curl --location --request DELETE 'http://localhost:8080/api/v1/flags/deleteRule/1'
+```
