@@ -60,10 +60,9 @@ public class FeatureFlagController {
         return ResponseEntity.ok(featureFlagService.updateFlagStatus(flagKey, request));
     }
 
-    @GetMapping("/{flagKey}/evaluate")
-    public ResponseEntity<FeatureFlagEvaluationResponse> evaluateflag(
-        @PathVariable String flagKey,
-        @RequestParam String userId){
+        @GetMapping("/{flagKey}/evaluate")
+        public ResponseEntity<FeatureFlagEvaluationResponse> evaluateFlag(
+                @PathVariable String flagKey, @RequestParam String userId) {
             return ResponseEntity.ok(featureFlagService.evaluateFlag(flagKey, userId));
     }
 
@@ -97,5 +96,4 @@ public class FeatureFlagController {
         featureFlagService.deleteRule(ruleId);
         return ResponseEntity.noContent().build();
     }
-    
 }

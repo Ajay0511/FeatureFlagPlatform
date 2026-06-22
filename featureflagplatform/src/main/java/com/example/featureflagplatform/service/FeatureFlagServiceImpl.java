@@ -87,28 +87,66 @@ public class FeatureFlagServiceImpl implements FeatureFlagService {
 
     @Override
     @Transactional(readOnly = true)
-    public FeatureFlagEvaluationResponse evaluateFlag(String flagKey, String userId){
-        FeatureFlag featureFlag = featureFlagRepository.findByFlagKeyAndActiveTrue(flagKey)
-                                .orElseThrow(() -> new FlagNotFoundCustomException("flag key " + flagKey + " not found"));
-        
-        if(!featureFlag.isEnabled()){
+    public FeatureFlagEvaluationResponse evaluateFlag(String flagKey, String userId) {
+
+        FeatureFlag featureFlag = featureFlagRepository
+                .findByFlagKeyAndActiveTrue(flagKey)
+                .orElseThrow(() ->
+                        new FlagNotFoundCustomException("flag key " + flagKey + " not found"));
+
+        /*
+        * Step 1 : Flag disabled globally
+        */
+        if (!featureFlag.isEnabled()) {
             return FeatureFlagEvaluationResponse.builder()
-                .flagKey(featureFlag.getFlagKey())
-                .enabled(featureFlag.isEnabled())
-                .reason("DISABLED")
-                .build();
+                    .flagKey(flagKey)
+                    .enabled(false)
+                    .reason("DISABLED")
+                    .build();
         }
 
+        /*
+        * Step 2 : Explicit user targeting overrides everything
+        */
+        List<FeatureFlagRule> rules =
+                featureFlagRuleRepository.findByFeatureFlag(featureFlag);
+
+        boolean userMatched = rules.stream()
+                .filter(rule -> "USER_ID".equalsIgnoreCase(rule.getRuleType()))
+                .anyMatch(rule -> userId.equals(rule.getRuleValue()));
+
+        if (userMatched) {
+            return FeatureFlagEvaluationResponse.builder()
+                    .flagKey(flagKey)
+                    .enabled(true)
+                    .reason("USER_RULE_MATCHED")
+                    .build();
+        }
+
+        /*
+        * Step 3 : Percentage rollout
+        */
         int bucket = Math.abs(userId.hashCode()) % 100;
 
-        boolean enabledForUser = bucket < featureFlag.getRolloutPercentage();
+        boolean rolloutMatched =
+                bucket < featureFlag.getRolloutPercentage();
 
+        if (rolloutMatched) {
+            return FeatureFlagEvaluationResponse.builder()
+                    .flagKey(flagKey)
+                    .enabled(true)
+                    .reason("ROLLOUT_MATCHED")
+                    .build();
+        }
+
+        /*
+        * Step 4 : Deny
+        */
         return FeatureFlagEvaluationResponse.builder()
-                .flagKey(featureFlag.getFlagKey())
-                .enabled(enabledForUser)
-                .reason(enabledForUser ? "ROLLOUT_MATCHED" : "ROLLOUT_NOT_MATCHED")
+                .flagKey(flagKey)
+                .enabled(false)
+                .reason("ROLLOUT_NOT_MATCHED")
                 .build();
-        
     }
 
     @Override 

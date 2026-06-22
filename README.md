@@ -601,3 +601,18 @@ curl --location 'http://localhost:8080/api/v1/flags/NEW_DASHBOARD/getRules'
 ```bash
 curl --location --request DELETE 'http://localhost:8080/api/v1/flags/deleteRule/1'
 ```
+
+
+### Evaluation logic of feature flag rule
+```bash
+curl --location 'http://localhost:8080/api/v1/flags/NEW_DASHBOARD/evaluate?userId=user123'
+```
+
+```json
+{
+    "flagKey": "NEW_DASHBOARD",
+    "enabled": true,
+    "reason": "USER_RULE_MATCHED",
+    "rolloutPercentage": null
+}
+```
