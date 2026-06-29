@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.featureflagplatform.dto.request.AddRuleRequest;
 import com.example.featureflagplatform.dto.request.CreateFeatureFlagRequest;
+import com.example.featureflagplatform.dto.request.FeatureFlagEvaluationRequestv2;
 import com.example.featureflagplatform.dto.request.UpdateFeatureFlagStatusRequest;
 import com.example.featureflagplatform.dto.request.UpdateRolloutRequest;
 import com.example.featureflagplatform.dto.response.FeatureFlagEvaluationResponse;
@@ -16,6 +17,7 @@ import com.example.featureflagplatform.entity.FeatureFlag;
 import com.example.featureflagplatform.entity.FeatureFlagRule;
 import com.example.featureflagplatform.exception.FlagAlreadyExistsException;
 import com.example.featureflagplatform.exception.FlagNotFoundCustomException;
+import com.example.featureflagplatform.helper.FeatureFlagHelper;
 import com.example.featureflagplatform.repository.FeatureFlagRepository;
 import com.example.featureflagplatform.repository.FeatureFlagRuleRepository;
 
@@ -173,6 +175,7 @@ public class FeatureFlagServiceImpl implements FeatureFlagService {
         
         FeatureFlagRule featureFlagRule = FeatureFlagRule.builder()
                                             .ruleType(request.getRuleType())
+                                            .operatorType(request.getOperatorType())
                                             .ruleValue(request.getRuleValue())
                                             .featureFlag(featureFlag)
                                             .build();
@@ -181,6 +184,7 @@ public class FeatureFlagServiceImpl implements FeatureFlagService {
         return RuleResponse.builder().id(savedFlagRule.getId())
                     .ruleType(savedFlagRule.getRuleType())
                     .ruleValue(savedFlagRule.getRuleValue())
+                    .operatorType(savedFlagRule.getOperatorType())
                     .build();
     }
 
@@ -201,6 +205,148 @@ public class FeatureFlagServiceImpl implements FeatureFlagService {
     @Override
     public void deleteRule(Long ruleId){
         featureFlagRuleRepository.deleteById(ruleId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public FeatureFlagEvaluationResponse evaluateFlagv2(String flagKey, FeatureFlagEvaluationRequestv2 request){
+        //return evaluateFlag(flagKey, request.getUserId());
+        FeatureFlag featureFlag = featureFlagRepository.findByFlagKeyAndActiveTrue(flagKey).orElseThrow(
+            () -> new FlagNotFoundCustomException("Flag key " + flagKey + " not found")
+        );
+
+        //Flag Disabled globally
+        if(!featureFlag.isEnabled()){
+            return FeatureFlagEvaluationResponse.builder()
+                .flagKey(featureFlag.getFlagKey())
+                .enabled(false)
+                .reason("DISABLED")
+                .build();
+        }
+
+        //check on userId
+        List<FeatureFlagRule> rules = featureFlagRuleRepository.findByFeatureFlag(featureFlag);
+
+        boolean userIdMatched = rules.stream()
+                    .filter(rule -> "USER_ID".equalsIgnoreCase(rule.getRuleType()))
+                    .anyMatch(rule -> FeatureFlagHelper.evaluateRule(
+                        request.getUserId(),
+                        rule.getOperatorType(),
+                        rule.getRuleValue()
+                ));
+        
+        if(userIdMatched){
+            return FeatureFlagEvaluationResponse.builder()
+                    .flagKey(flagKey)
+                    .enabled(true)
+                    .reason("USER_ID Rule Matched")
+                    .build();
+        }
+
+        /*
+        * EMAIL
+        */
+        boolean emailMatched = rules.stream()
+                .filter(rule ->
+                        "EMAIL".equalsIgnoreCase(rule.getRuleType()))
+                .anyMatch(rule ->
+                        FeatureFlagHelper.evaluateRule(request.getEmail(), 
+                        rule.getOperatorType(), 
+                        rule.getRuleValue()));
+
+        if (emailMatched) {
+            return FeatureFlagEvaluationResponse.builder()
+                    .flagKey(flagKey)
+                    .enabled(true)
+                    .reason("EMAIL_RULE_MATCHED")
+                    .build();
+        }
+
+        /*
+        * COUNTRY
+        */
+        boolean countryMatched = rules.stream()
+                .filter(rule ->
+                        "COUNTRY".equalsIgnoreCase(rule.getRuleType()))
+                .anyMatch(rule ->
+                        FeatureFlagHelper.evaluateRule(request.getCountry(), 
+                        rule.getOperatorType(),
+                        rule.getRuleValue()));
+
+        if (countryMatched) {
+            return FeatureFlagEvaluationResponse.builder()
+                    .flagKey(flagKey)
+                    .enabled(true)
+                    .reason("COUNTRY_RULE_MATCHED")
+                    .build();
+        }
+
+        /*
+        * COMPANY_ID
+        */
+        boolean companyMatched = rules.stream()
+                .filter(rule ->
+                        "COMPANY_ID".equalsIgnoreCase(rule.getRuleType()))
+                .anyMatch(rule ->
+                        FeatureFlagHelper.evaluateRule(request.getCompanyId(), 
+                        rule.getOperatorType(), 
+                        rule.getRuleValue()));
+
+        if (companyMatched) {
+            return FeatureFlagEvaluationResponse.builder()
+                    .flagKey(flagKey)
+                    .enabled(true)
+                    .reason("COMPANY_RULE_MATCHED")
+                    .build();
+        }
+
+        /*
+        * PLAN
+        */
+        boolean planMatched = rules.stream()
+                .filter(rule ->
+                        "PLAN".equalsIgnoreCase(rule.getRuleType()))
+                .anyMatch(rule ->
+                        FeatureFlagHelper.evaluateRule(request.getPlan(), 
+                        rule.getOperatorType(), 
+                        rule.getRuleValue()));
+
+        if (planMatched) {
+            return FeatureFlagEvaluationResponse.builder()
+                    .flagKey(flagKey)
+                    .enabled(true)
+                    .reason("PLAN_RULE_MATCHED")
+                    .build();
+        }
+
+        /*
+        * Rollout fallback
+        */
+        if (request.getUserId() == null) {
+            return FeatureFlagEvaluationResponse.builder()
+                    .flagKey(flagKey)
+                    .enabled(false)
+                    .reason("USER_ID_REQUIRED_FOR_ROLLOUT")
+                    .build();
+        }
+
+        int bucket =
+                Math.abs(request.getUserId().hashCode()) % 100;
+
+        boolean rolloutMatched =
+                bucket < featureFlag.getRolloutPercentage();
+
+        return FeatureFlagEvaluationResponse.builder()
+                .flagKey(flagKey)
+                .enabled(rolloutMatched)
+                .reason(
+                        rolloutMatched
+                                ? "ROLLOUT_MATCHED"
+                                : "ROLLOUT_NOT_MATCHED")
+                .rolloutPercentage(
+                        featureFlag.getRolloutPercentage())
+                .build();
+
     }
 
     public FeatureFlagResponse mapToResponse(FeatureFlag featureFlag){

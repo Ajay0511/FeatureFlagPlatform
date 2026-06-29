@@ -19,4 +19,6 @@ public class RuleResponse {
 
     private String ruleValue;
 
+    private String operatorType;
+
 }

@@ -38,5 +38,6 @@ public class FeatureFlagRule {
     @Column(name = "rule_value", nullable = false)
     private String ruleValue;
 
-
+    @Column(name = "operator_type")
+    private String operatorType;
 }

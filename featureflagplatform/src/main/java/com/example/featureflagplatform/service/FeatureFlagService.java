@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.example.featureflagplatform.dto.request.AddRuleRequest;
 import com.example.featureflagplatform.dto.request.CreateFeatureFlagRequest;
+import com.example.featureflagplatform.dto.request.FeatureFlagEvaluationRequestv2;
 import com.example.featureflagplatform.dto.request.UpdateFeatureFlagStatusRequest;
 import com.example.featureflagplatform.dto.request.UpdateRolloutRequest;
 import com.example.featureflagplatform.dto.response.FeatureFlagEvaluationResponse;
@@ -29,4 +30,6 @@ public interface FeatureFlagService {
     List<RuleResponse> getRules(String flagKey);
 
     void deleteRule(Long ruleId);
+
+    FeatureFlagEvaluationResponse evaluateFlagv2(String flagKey, FeatureFlagEvaluationRequestv2 request);
 }

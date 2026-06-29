@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.featureflagplatform.dto.request.AddRuleRequest;
 import com.example.featureflagplatform.dto.request.CreateFeatureFlagRequest;
+import com.example.featureflagplatform.dto.request.FeatureFlagEvaluationRequestv2;
 import com.example.featureflagplatform.dto.request.UpdateFeatureFlagStatusRequest;
 import com.example.featureflagplatform.dto.request.UpdateRolloutRequest;
 import com.example.featureflagplatform.dto.response.FeatureFlagEvaluationResponse;
@@ -95,5 +96,14 @@ public class FeatureFlagController {
     public ResponseEntity<Void> deleteRule(@PathVariable Long ruleId) {
         featureFlagService.deleteRule(ruleId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{flagKey}/evaluate/v2")
+    public ResponseEntity<FeatureFlagEvaluationResponse> evaluateFlagV2(
+            @PathVariable String flagKey,
+            @RequestBody FeatureFlagEvaluationRequestv2 request) {
+
+        return ResponseEntity.ok(
+                featureFlagService.evaluateFlagv2(flagKey, request));
     }
 }

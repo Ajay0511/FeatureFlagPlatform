@@ -616,3 +616,55 @@ curl --location 'http://localhost:8080/api/v1/flags/NEW_DASHBOARD/evaluate?userI
     "rolloutPercentage": null
 }
 ```
+
+### v2 Implementation of Rule Evaluation
+
+## Addition of new column
+```sql
+ ALTER TABLE feature_flag_rules add COLUMN operator_type VARCHAR(50) DEFAULT 'EQUALS';
+```
+
+
+### Rule addition changes
+```bash
+curl --location 'http://localhost:8080/api/v1/flags/NEW_DASHBOARD/addRule' \
+--header 'Content-Type: application/json' \
+--data '{
+    "ruleType":"PLAN",
+    "operatorType":"ENDS_WITH",
+    "ruleValue":"wohoo"
+}'
+```
+
+### Response
+```json
+{
+    "id": 8,
+    "ruleType": "PLAN",
+    "ruleValue": "wohoo",
+    "operatorType": "ENDS_WITH"
+}
+```
+
+### Request
+```bash
+curl --location 'http://localhost:8080/api/v1/flags/NEW_DASHBOARD/evaluate/v2' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "userId": "use3",
+    "email": "user123@company.om",
+    "country": "IN",
+    "companyId": "SHL",
+    "plan": "wohoo"
+}'
+```
+
+### Response
+```json
+{
+    "flagKey": "NEW_DASHBOARD",
+    "enabled": true,
+    "reason": "COUNTRY_RULE_MATCHED",
+    "rolloutPercentage": null
+}
+```

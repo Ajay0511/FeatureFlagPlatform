@@ -19,4 +19,6 @@ public class AddRuleRequest {
 
     @NotBlank(message = "Rule value cannot be blank")
     private String ruleValue;
+
+    private String operatorType;
 }
